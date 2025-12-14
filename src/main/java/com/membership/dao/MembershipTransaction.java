@@ -50,6 +50,9 @@ public class MembershipTransaction {
     @Enumerated(EnumType.STRING)
     @Column(name = "plan_type" , nullable = false)
     private PlanType planType;
+
+    @Column(name = "idempotency_key", nullable = false, unique = true)
+    private String idempotencyKey;
     // can add current, payment reference_id etc later, currently don't have payment service so ignoring it
     @PrePersist
     public void prePersist() {

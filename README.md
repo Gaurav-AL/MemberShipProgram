@@ -42,3 +42,14 @@ If you manually switch to a different parent and actually want the inheritance, 
 3 - Each Tier have their Own benefits, like X% Discount on SILVER, GOLD and PLATINUM.
 4 - Member Tier and Plan Tier are separate and has their own benefits and business logic,  hasn't been covered in the scope of this assignment and I didn't covered in this assignment because of personal experience and reasons.
 
+
+## API
+
+# Create Order API
+ curl --location --request POST 'http://localhost:9090/api/orders/create' \                                                                                               
+--header 'Content-Type: application/json' \
+--header 'Idempotency-Key: order-uid-123456' \
+--data '{
+    "userId": 1,
+    "productId": "9a76f1ed-85b6-4069-bf52-58b5d67e1ada"
+}'
