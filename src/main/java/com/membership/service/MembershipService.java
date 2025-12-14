@@ -1,6 +1,7 @@
 package com.membership.service;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,9 +12,13 @@ import com.membership.Repository.PlanRepository;
 import com.membership.Repository.UserMembershipRepository;
 import com.membership.dao.MemberStatus;
 import com.membership.dao.MemberTier;
+import com.membership.dao.Order;
 import com.membership.dao.Plan;
 import com.membership.dao.PlanTier;
 import com.membership.dao.UserMemberShipInfo;
+import com.membership.dto.PlanRequest;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class MembershipService {
@@ -29,7 +34,17 @@ public class MembershipService {
     @Autowired
     private MemberShipTransactionService memberShipTransactionService;
 
-    public UserMemberShipInfo subscribe(Long userId, Long planId) {
+    @Transactional
+    public UserMemberShipInfo subscribe(PlanRequest request) {
+
+        Optional<UserMemberShipInfo> existing =
+            membershipRepo.findByIdempotencyKey(request.getIdempotencyKey());
+
+        if (existing.isPresent()) {
+            return existing.get(); // idempotent response
+        }
+        Long planId = request.getPlanId();
+        Long userId = request.getPlanId();
         Plan plan = planRepo.findById(planId)
                 .orElseThrow(() -> new RuntimeException("Invalid Plan"));
 
@@ -49,7 +64,7 @@ public class MembershipService {
             
             PlanTier upgradedPlanTier = upgradedPlanTier(info.getPlanTier());
             if(upgradedPlanTier != info.getPlanTier()){
-                memberShipTransactionService.saveUpgradedTransaction(userId, info.getPlanTier(), upgradedPlanTier, info.getPlanType());
+                memberShipTransactionService.saveUpgradedTransaction(userId, info.getPlanTier(), upgradedPlanTier, info.getPlanType(), request.getIdempotencyKey());
                 info.setPlanTier(upgradedPlanTier);
             }else{
                 log.warn("User {} is already at highest tier: {}",
@@ -59,7 +74,7 @@ public class MembershipService {
             info.setExpiryDate(calculateNewExpiry(info, 30));
 
             log.info("User {} upgraded to tier {}", userId, upgradedTier);
-
+            
             return membershipRepo.save(info);
         }
         else
@@ -70,11 +85,22 @@ public class MembershipService {
             newInfo.setMemberTier(MemberTier.SILVER);
             newInfo.setExpiryDate(LocalDate.now().plusDays(30));
             newInfo.setPlanTier(PlanTier.FREE);
+            newInfo.setIdempotencyKey(request.getIdempotencyKey());
             return membershipRepo.save(newInfo);
         }
     }
 
-    public UserMemberShipInfo upgrade(Long userId, PlanTier newTier) {
+    public UserMemberShipInfo upgrade(PlanRequest request) {
+
+        Optional<UserMemberShipInfo> existing =
+            membershipRepo.findByIdempotencyKey(request.getIdempotencyKey());
+
+        if (existing.isPresent()) {
+            return existing.get(); // idempotent response
+        }
+
+        Long userId = request.getUserId();
+        PlanTier newTier = request.getPlanTier();
         UserMemberShipInfo info = membershipRepo.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("User not subscribed"));
 
@@ -83,7 +109,7 @@ public class MembershipService {
         PlanTier upgradedPlanTier = upgradedPlanTier(info.getPlanTier());
         if(upgradedPlanTier != info.getPlanTier()){
             info.setPlanTier(upgradedPlanTier);
-            memberShipTransactionService.saveUpgradedTransaction(userId, info.getPlanTier(), upgradedPlanTier, info.getPlanType());
+            memberShipTransactionService.saveUpgradedTransaction(userId, info.getPlanTier(), upgradedPlanTier, info.getPlanType(), request.getIdempotencyKey());
         }else{
             log.warn("User {} is already at highest tier: {}",
                     userId, info.getPlanTier());
@@ -100,7 +126,16 @@ public class MembershipService {
         return membershipRepo.save(info);
     }
 
-    public UserMemberShipInfo downgrade(Long userId, PlanTier oldTier) {
+    public UserMemberShipInfo downgrade(PlanRequest request) {
+        Optional<UserMemberShipInfo> existing =
+            membershipRepo.findByIdempotencyKey(request.getIdempotencyKey());
+
+        if (existing.isPresent()) {
+            return existing.get(); // idempotent response
+        }
+
+        Long userId =request.getUserId();
+        PlanTier oldTier = request.getPlanTier();
         UserMemberShipInfo info = membershipRepo.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("User not subscribed"));
 
@@ -108,7 +143,7 @@ public class MembershipService {
 
         PlanTier downgradePlanTier = downgradeTierPlanTier(info.getPlanTier());
         if(downgradePlanTier != info.getPlanTier()){
-            memberShipTransactionService.saveDowngradedTransaction(userId, info.getPlanTier(), downgradePlanTier, info.getPlanType());
+            memberShipTransactionService.saveDowngradedTransaction(userId, info.getPlanTier(), downgradePlanTier, info.getPlanType(), request.getIdempotencyKey());
             info.setPlanTier(downgradePlanTier);
         }else{
             log.warn("User {} is already at lowest tier: {}",
@@ -128,14 +163,16 @@ public class MembershipService {
         return membershipRepo.save(info);
     }
 
-    public UserMemberShipInfo cancel(Long userId, PlanTier oldTier) {
+    public UserMemberShipInfo cancel(PlanRequest request) {
+        Long userId = request.getUserId();
+        PlanTier oldTier = request.getPlanTier();
         UserMemberShipInfo info = membershipRepo.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("User not subscribed"));
 
         log.info("UserMemberShipInfo  cancel userId {} , oldTier {}", userId , oldTier);
         PlanTier cancelPlanTier = downgradeTierPlanTier(info.getPlanTier());
         if(cancelPlanTier != info.getPlanTier()){
-            memberShipTransactionService.saveCancelledTransaction(userId, oldTier, cancelPlanTier, info.getPlanType());
+            memberShipTransactionService.saveCancelledTransaction(userId, oldTier, cancelPlanTier, info.getPlanType(),request.getIdempotencyKey());
             info.setPlanTier(cancelPlanTier);
         }else{
             log.warn("User {} is already at lowest tier: {}",

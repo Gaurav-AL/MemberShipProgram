@@ -2,12 +2,17 @@ package com.membership.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.membership.dao.PlanTier;
+import com.membership.dto.OrderRequest;
+import com.membership.dto.PlanRequest;
 import com.membership.service.MembershipService;
 
 @RestController
@@ -18,23 +23,39 @@ public class MembershipController {
     private MembershipService membershipService;
 
     @PostMapping("/subscribe")
-    public ResponseEntity<?> subscribe(@RequestParam Long userId, @RequestParam Long planId) {
-        return ResponseEntity.ok(membershipService.subscribe(userId, planId));
+    public ResponseEntity<?> subscribe(
+        @RequestHeader("Idempotency-Key") String key,
+        @RequestBody @Validated PlanRequest request) 
+    {
+        request.setIdempotencyKey(key);
+        return ResponseEntity.ok(membershipService.subscribe(request));
     }
 
     @PostMapping("/upgrade")
-    public ResponseEntity<?> upgrade(@RequestParam Long userId, @RequestParam PlanTier tier) {
-        return ResponseEntity.ok(membershipService.upgrade(userId, tier));
+    public ResponseEntity<?> upgrade(
+        @RequestHeader("Idempotency-Key") String key,
+        @RequestBody @Validated PlanRequest request) 
+    {
+        request.setIdempotencyKey(key);
+        return ResponseEntity.ok(membershipService.upgrade(request));
     }
 
     @PostMapping("/downgrade")
-    public ResponseEntity<?> downgrade(@RequestParam Long userId, @RequestParam PlanTier tier) {
-        return ResponseEntity.ok(membershipService.downgrade(userId, tier));
+    public ResponseEntity<?> downgrade(
+        @RequestHeader("Idempotency-Key") String key,
+        @RequestBody @Validated PlanRequest request) 
+    {
+        request.setIdempotencyKey(key);
+        return ResponseEntity.ok(membershipService.downgrade(request));
     }
 
     @PostMapping("/cancel")
-    public ResponseEntity<?> cancel(@RequestParam Long userId, @RequestParam(required = false) PlanTier tier) {
-        return ResponseEntity.ok(membershipService.cancel(userId, tier));
+    public ResponseEntity<?> cancel(
+        @RequestHeader("Idempotency-Key") String key,
+        @RequestBody @Validated PlanRequest request) 
+    {
+        request.setIdempotencyKey(key);
+        return ResponseEntity.ok(membershipService.cancel(request));
     }
 
     @GetMapping("/info")

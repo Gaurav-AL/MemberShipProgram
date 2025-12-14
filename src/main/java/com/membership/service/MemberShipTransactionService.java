@@ -2,10 +2,13 @@ package com.membership.service;
 
 
 import java.util.List;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.membership.Repository.MemberShipTransactionRepository;
 import com.membership.dao.MembershipTransaction;
+import com.membership.dao.OrderTransaction;
 import com.membership.dao.PlanTier;
 import com.membership.dao.PlanType;
 import com.membership.dao.TransactionType;
@@ -16,7 +19,13 @@ public class MemberShipTransactionService {
     @Autowired
     private MemberShipTransactionRepository membershipTransRepo;
 
-    public void saveUpgradedTransaction(Long UserId, PlanTier from_tier , PlanTier to_tier, PlanType planType){
+    public void saveUpgradedTransaction(Long UserId, PlanTier from_tier , PlanTier to_tier, PlanType planType, String idempotencyKey){
+        Optional<MembershipTransaction> existing =
+            membershipTransRepo.findByIdempotencyKey(idempotencyKey);
+
+        if (existing.isPresent()) {
+            return; // already Processed
+        }
         int calculateCumulativePrice = getCalculatedCumulativeUpgradedTierPricing(from_tier , to_tier ,planType);
         MembershipTransaction memTrans = new MembershipTransaction();
         memTrans.setUserId(UserId);
@@ -25,10 +34,17 @@ public class MemberShipTransactionService {
         memTrans.setToTier(to_tier);
         memTrans.setReason(TransactionType.UPGRADE);
         memTrans.setPlanType(planType);
+        memTrans.setIdempotencyKey(idempotencyKey);
         membershipTransRepo.save(memTrans);
     }
 
-    public void saveDowngradedTransaction(Long UserId, PlanTier from_tier , PlanTier to_tier,PlanType planType){
+    public void saveDowngradedTransaction(Long UserId, PlanTier from_tier , PlanTier to_tier,PlanType planType, String idempotencyKey){
+        Optional<MembershipTransaction> existing =
+            membershipTransRepo.findByIdempotencyKey(idempotencyKey);
+
+        if (existing.isPresent()) {
+            return; // already Processed
+        }
         int calculateCumulativePrice = getCalculatedCumulativeDowngradedTierPricing(from_tier , to_tier, planType);
         MembershipTransaction memTrans = new MembershipTransaction();
         memTrans.setUserId(UserId);
@@ -36,11 +52,18 @@ public class MemberShipTransactionService {
         memTrans.setFromTier(from_tier);
         memTrans.setToTier(to_tier);
         memTrans.setReason(TransactionType.DOWNGRADE);
+        memTrans.setIdempotencyKey(idempotencyKey);
         memTrans.setPlanType(planType);
         membershipTransRepo.save(memTrans);
     }
 
-    public void saveCancelledTransaction(Long UserId, PlanTier from_tier , PlanTier to_tier, PlanType planType){
+    public void saveCancelledTransaction(Long UserId, PlanTier from_tier , PlanTier to_tier, PlanType planType, String idempotencyKey){
+        Optional<MembershipTransaction> existing =
+            membershipTransRepo.findByIdempotencyKey(idempotencyKey);
+
+        if (existing.isPresent()) {
+            return; // already Processed
+        }
         // to_tier will become BASIC, from_tier to price in negative have to amount to be paid
         MembershipTransaction memTrans = new MembershipTransaction();
         memTrans.setUserId(UserId);
@@ -49,6 +72,7 @@ public class MemberShipTransactionService {
         memTrans.setToTier(to_tier);
         memTrans.setReason(TransactionType.CANCEL);
         memTrans.setPlanType(planType);
+        memTrans.setIdempotencyKey(idempotencyKey);
         membershipTransRepo.save(memTrans);
     }
 

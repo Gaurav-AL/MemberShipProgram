@@ -18,5 +18,7 @@ public interface UserMembershipRepository extends JpaRepository<UserMemberShipIn
     List<UserMemberShipInfo> findByUserIdAndMemberStatus(Long userId , MemberStatus ACTIVE);
     Optional<UserMemberShipInfo> findByUserId(Long userId);
 
+    Optional<UserMemberShipInfo> findByIdempotencyKey(String idempotencyKey);
+
 }
 
