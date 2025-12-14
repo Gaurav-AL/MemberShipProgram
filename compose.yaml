@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: membership-postgres
+    environment:
+      POSTGRES_DB: membershipdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+      - pgdata:/var/lib/postgresql/data
+
+  membership-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: membership-service
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/membershipdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+
+volumes:
+  pgdata:
