@@ -74,10 +74,11 @@ Header: Idempotency-Key: <UUID>
 
 ### Orders APIs
 
-| Method | Endpoint           | Description            |
-| ------ | ------------------ | ---------------------- |
-| POST   | /api/orders/create | Create an order        |
-| GET    | /api/orders/get    | Fetch orders by userId |
+| Method | Endpoint                  | Description            |
+| ------ | --------------------------| ---------------------- |
+| POST   | /api/orders/create        | Create an order        |
+| GET    | /api/orders/get           | Fetch orders by userId |
+| GET    | /api/v1/order-transactions| Get Orders trx By userID |
 
 ---
 
