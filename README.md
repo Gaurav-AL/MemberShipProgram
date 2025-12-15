@@ -1,55 +1,186 @@
-# Read Me First
-The following was discovered as part of building this project:
+# Membership Service
 
-* No Docker Compose services found. As of now, the application won't start! Please add at least one service to the `compose.yaml` file.
+A production‑ready **Membership & Subscription Management Service** built with **Spring Boot + PostgreSQL**, supporting **idempotent operations**, **plan lifecycle management**, **order & transaction tracking**, and **tier upgrades based on spending**.
 
-# Getting Started
+---
 
-### Reference Documentation
-For further reference, please consider the following sections:
+## ✨ Features
 
-* [Official Apache Maven documentation](https://maven.apache.org/guides/index.html)
-* [Spring Boot Maven Plugin Reference Guide](https://docs.spring.io/spring-boot/4.0.0/maven-plugin)
-* [Create an OCI image](https://docs.spring.io/spring-boot/4.0.0/maven-plugin/build-image.html)
-* [Spring Web](https://docs.spring.io/spring-boot/4.0.0/reference/web/servlet.html)
-* [Docker Compose Support](https://docs.spring.io/spring-boot/4.0.0/reference/features/dev-services.html#features.dev-services.docker-compose)
+* User membership lifecycle
 
-### Guides
-The following guides illustrate how to use some features concretely:
+  * Subscribe
+  * Upgrade
+  * Downgrade
+  * Cancel
+* Idempotent APIs (safe retries)
+* Order & order‑transaction separation
+* Tier auto‑upgrade based on total spend
+* PostgreSQL persistence using JPA/Hibernate
+* Clean REST APIs with validation
+* Designed for extensibility (cron jobs, alarms, analytics)
 
-* [Building a RESTful Web Service](https://spring.io/guides/gs/rest-service/)
-* [Serving Web Content with Spring MVC](https://spring.io/guides/gs/serving-web-content/)
-* [Building REST services with Spring](https://spring.io/guides/tutorials/rest/)
+---
 
-### Docker Compose support
-This project contains a Docker Compose file named `compose.yaml`.
+## 🧱 Tech Stack
 
-However, no services were found. As of now, the application won't start!
+* **Java 17+**
+* **Spring Boot 3 / Spring 7**
+* **Spring Data JPA**
+* **PostgreSQL**
+* **Hibernate**
+* **Lombok**
+* **Maven**
 
-Please make sure to add at least one service in the `compose.yaml` file.
+---
 
-### Maven Parent overrides
+## 📦 Domain Model (High Level)
 
-Due to Maven's design, elements are inherited from the parent POM to the project POM.
-While most of the inheritance is fine, it also inherits unwanted elements like `<license>` and `<developers>` from the parent.
-To prevent this, the project POM contains empty overrides for these elements.
-If you manually switch to a different parent and actually want the inheritance, you need to remove those overrides.
+* **UserMembership** – current active plan & tier
+* **Plan / PlanTier** – pricing & hierarchy
+* **Product** – purchasable plans
+* **Order** – purchase intent
+* **OrderTransaction** – money movement (BUY / REFUND)
+* **MembershipTransaction** – membership state changes
 
-// Designing
+---
 
-1 - Users can opt for Plan, Plans have Benefits and Pricing.
-2 - Users have Tier and don't have pricing, But In further version we can have new feature to increase Tier of the user based on monetary values or Buy some product at some discount (Orders), It get changes based on their Order Value.
-3 - Each Tier have their Own benefits, like X% Discount on SILVER, GOLD and PLATINUM.
-4 - Member Tier and Plan Tier are separate and has their own benefits and business logic,  hasn't been covered in the scope of this assignment and I didn't covered in this assignment because of personal experience and reasons.
+## 🔐 Idempotency Design
 
+All **write operations** require an `Idempotency-Key` header.
 
-## API
+* Prevents duplicate orders on retries
+* Enforced using **unique DB constraints**
+* Same request + same key → same result
 
-# Create Order API
- curl --location --request POST 'http://localhost:9090/api/orders/create' \                                                                                               
+```
+Header: Idempotency-Key: <UUID>
+```
+
+---
+
+## 🚀 API Endpoints
+
+### Membership APIs
+
+| Method | Endpoint                  | Description              |
+| ------ | ------------------------- | ------------------------ |
+| POST   | /api/membership/subscribe | Subscribe to a plan      |
+| POST   | /api/membership/upgrade   | Upgrade membership       |
+| POST   | /api/membership/downgrade | Downgrade membership     |
+| POST   | /api/membership/cancel    | Cancel membership        |
+| GET    | /api/membership/info      | Get user membership info |
+
+---
+
+### Orders APIs
+
+| Method | Endpoint           | Description            |
+| ------ | ------------------ | ---------------------- |
+| POST   | /api/orders/create | Create an order        |
+| GET    | /api/orders/get    | Fetch orders by userId |
+
+---
+
+## 📄 Sample Requests
+
+### Subscribe
+
+```bash
+curl --location 'http://localhost:9090/api/membership/subscribe' \
 --header 'Content-Type: application/json' \
---header 'Idempotency-Key: order-uid-123456' \
+--header 'Idempotency-Key: 8c3c8c7e-1a0e-4f5c-b3a1-111111111111' \
 --data '{
-    "userId": 1,
-    "productId": "9a76f1ed-85b6-4069-bf52-58b5d67e1ada"
+  "userId": 1,
+  "planId": 1,
+  "tier": "BASIC"
 }'
+```
+
+---
+
+### Create Order
+
+```bash
+curl --location 'http://localhost:9090/api/orders/create' \
+--header 'Content-Type: application/json' \
+--header 'Idempotency-Key: 111e4567-e89b-12d3-a456-426614174000' \
+--data '{
+  "userId": 1,
+  "productId": "c6d29c1e-1f55-4e0b-9a32-cc10cde333aa"
+}'
+```
+
+---
+
+## 🗄️ Database Tables (Core)
+
+* user_membership
+* membership_transaction
+* orders
+* order_transaction
+* product
+
+Each transactional table includes:
+
+* `idempotency_key` (UNIQUE)
+* `created_at`
+
+---
+
+## ⏰ Tier Upgrade Logic
+
+* Total spend is calculated from **order_transaction**
+* Cron/async worker can:
+
+  * Evaluate thresholds
+  * Upgrade tier automatically
+
+(Ready for Quartz / @Scheduled integration)
+
+---
+
+## ⚠️ Error Handling
+
+* Duplicate idempotency key → existing response returned
+* Validation errors → 400
+* Missing resources → 404
+* Constraint violations → handled gracefully
+
+---
+
+## 🧪 Testing
+
+* APIs tested using **Thunder Client / curl**
+* Safe retry behavior verified via idempotency
+
+---
+
+## 📌 How to Run
+
+```bash
+mvn clean install
+mvn spring-boot:run
+```
+
+PostgreSQL must be running and configured in `application.yml`.
+
+---
+
+## 📈 Future Enhancements
+
+* Payment gateway integration
+* Refund workflows
+* Webhooks
+* Admin dashboard
+* Analytics & reports
+
+---
+
+## 👤 Author
+
+**Gaurav Chaudhary**
+Backend Engineer | Java | Spring Boot | Systems Design
+
+---
+
+If you like this project ⭐ the repository and feel free to contribute.
