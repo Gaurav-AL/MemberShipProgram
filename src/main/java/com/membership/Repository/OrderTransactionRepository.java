@@ -11,6 +11,4 @@ import com.membership.dao.OrderTransaction;
 public interface OrderTransactionRepository extends JpaRepository<OrderTransaction , UUID>{
     List<OrderTransaction> findByUserId(Long userId);
 
-    Optional<OrderTransaction> findByIdempotencyKey(String idempotencyKey);
-
 } 

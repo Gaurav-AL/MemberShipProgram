@@ -9,13 +9,9 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
-import java.util.Optional;
-
 
 @Repository
 public interface MemberShipTransactionRepository extends JpaRepository<MembershipTransaction , UUID> {
         List<MembershipTransaction> findByUserId(Long userId);
-
-        Optional<MembershipTransaction> findByIdempotencyKey(String idempotencyKey);
 
 }

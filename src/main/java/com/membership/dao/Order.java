@@ -35,7 +35,7 @@ public class Order {
     @Column(name = "order_date_time")
     private LocalDateTime orderDateTime;
 
-      // Defined the One-to-One relationship
+    // Defined the One-to-One relationship
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
@@ -43,6 +43,4 @@ public class Order {
     @OneToMany(mappedBy = "orderId")
     private List<OrderTransaction> transactions;
 
-    @Column(name = "idempotency_key", unique = true)
-    private String idempotencyKey;
 }

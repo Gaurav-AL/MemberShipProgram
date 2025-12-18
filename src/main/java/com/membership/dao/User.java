@@ -50,13 +50,13 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "user_role" , nullable = false)
-    private UserRole role;
+    private UserRole role = UserRole.INDIVIDUAL;
 
     @Column(name = "is_active" , nullable = false)
-    private boolean isActive;
+    private boolean isActive = true;
 
     @Column(name = "last_active_date")
-    private LocalDateTime lastActive;
+    private LocalDateTime lastActive = LocalDateTime.now();
 
     @CreationTimestamp
     @Column(name = "created_at" , nullable = false, updatable = false)

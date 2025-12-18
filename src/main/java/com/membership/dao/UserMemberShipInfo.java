@@ -43,9 +43,6 @@ public class UserMemberShipInfo {
     @Column(name = "last_active", nullable = false)
     private LocalDateTime lastActive;
 
-    @Column(name = "idempotency_key", nullable = false, unique = true)
-    private String idempotencyKey;
-
     public UserMemberShipInfo() {} 
 
     @Override

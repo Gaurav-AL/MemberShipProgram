@@ -1,0 +1,16 @@
+package com.membership.dao;
+
+public enum Operations {
+    GET_ORDER,
+    GET_PLANS,
+    GET_PLAN_BENEFITS,
+    GET_ORDER_TRANSACTIONS,
+    GET_TRANSACTIONS,
+    GET_INFO,
+    POST_SUBSCRIBE,
+    POST_UPGRADE,
+    POST_DOWNGRADE,
+    POST_CANCEL,
+    POST_CREATE_USER,
+    POST_CREATE_ORDER
+}

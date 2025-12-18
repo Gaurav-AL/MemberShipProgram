@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.membership.Repository.OrderRepository;
 import com.membership.Repository.ProductRepository;
+import com.membership.dao.Operations;
 import com.membership.dao.Order;
 import com.membership.dao.Product;
 import com.membership.dto.OrderRequest;
@@ -33,12 +34,6 @@ public class OrderService {
     @Transactional
     public Order createOrders(OrderRequest request){
          // Check idempotency FIRST
-        Optional<Order> existing =
-            orderRepository.findByIdempotencyKey(request.getIdempotencyKey());
-
-        if (existing.isPresent()) {
-            return existing.get(); // idempotent response
-        }
 
         Product product = productRepository.findById(request.getProductId())
             .orElseThrow(() -> new RuntimeException("Product not found"));
@@ -48,17 +43,17 @@ public class OrderService {
         order.setProduct(product);
         order.setOrderAmount(product.getProductAmount());
         order.setOrderDateTime(LocalDateTime.now());
-        order.setIdempotencyKey(request.getIdempotencyKey());
-    
+        
         Order savedOrder = orderRepository.save(order);
 
         // 2️⃣ Create transaction once
-        orderTransactionService.createBuyTransaction(savedOrder);
+        orderTransactionService.createBuyTransaction(savedOrder, request.getIdempotencyKey());
 
         return savedOrder;
     }
 
     public List<Order> getOrderByUserId(Long userId) {
+        
         List<Order> orders = orderRepository.findByUserId(userId);
         return orders;
     }

@@ -8,7 +8,7 @@ import jakarta.validation.Constraint;
 
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
+@Target(ElementType.FIELD)
 @Constraint(validatedBy = CustomEmailValidator.class)
 public @interface EmailValidator {
     String message() default "Invalid Email Format";

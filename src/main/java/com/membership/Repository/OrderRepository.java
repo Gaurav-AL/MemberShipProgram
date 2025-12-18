@@ -11,6 +11,4 @@ import com.membership.dao.Order;
 @Repository
 public interface OrderRepository extends JpaRepository<Order , UUID> {
     List<Order> findByUserId(Long userId);
-
-    Optional<Order> findByIdempotencyKey(String idempotencyKey);
 }

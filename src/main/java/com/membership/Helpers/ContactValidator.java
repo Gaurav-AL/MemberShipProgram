@@ -9,7 +9,7 @@ import jakarta.validation.Payload;
 
 
 
-@Target(ElementType.TYPE)
+@Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = ContactValidatorImpl.class)
 public @interface ContactValidator {

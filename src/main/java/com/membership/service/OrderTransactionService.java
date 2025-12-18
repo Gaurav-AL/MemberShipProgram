@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.membership.Repository.OrderTransactionRepository;
+import com.membership.dao.Operations;
 import com.membership.dao.Order;
 import com.membership.dao.OrderTransaction;
 import com.membership.dao.OrderTransactionType;
@@ -26,22 +27,15 @@ public class OrderTransactionService {
         return orderTransactionRepository.findByUserId(userId);
     }
 
+
     @Transactional
-    public void createBuyTransaction(Order order) {
-
-        Optional<OrderTransaction> existing =
-            orderTransactionRepository.findByIdempotencyKey(order.getIdempotencyKey());
-
-        if (existing.isPresent()) {
-            return; // already Processed
-        }
+    public void createBuyTransaction(Order order, String idempotencyKey) {
 
         OrderTransaction tx = new OrderTransaction();
         tx.setUserId(order.getUserId());
         tx.setOrderId(order.getId());
         tx.setAmount(order.getOrderAmount());
         tx.setOrderTransactionType(OrderTransactionType.BUY);
-        tx.setIdempotencyKey(order.getIdempotencyKey());
         tx.setCreatedAt(LocalDateTime.now());
 
         orderTransactionRepository.save(tx);

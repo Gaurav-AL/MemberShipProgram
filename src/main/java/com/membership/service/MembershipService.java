@@ -12,6 +12,7 @@ import com.membership.Repository.PlanRepository;
 import com.membership.Repository.UserMembershipRepository;
 import com.membership.dao.MemberStatus;
 import com.membership.dao.MemberTier;
+import com.membership.dao.Operations;
 import com.membership.dao.Order;
 import com.membership.dao.Plan;
 import com.membership.dao.PlanTier;
@@ -34,15 +35,10 @@ public class MembershipService {
     @Autowired
     private MemberShipTransactionService memberShipTransactionService;
 
+
     @Transactional
     public UserMemberShipInfo subscribe(PlanRequest request) {
 
-        Optional<UserMemberShipInfo> existing =
-            membershipRepo.findByIdempotencyKey(request.getIdempotencyKey());
-
-        if (existing.isPresent()) {
-            return existing.get(); // idempotent response
-        }
         Long planId = request.getPlanId();
         Long userId = request.getPlanId();
         Plan plan = planRepo.findById(planId)
@@ -85,19 +81,11 @@ public class MembershipService {
             newInfo.setMemberTier(MemberTier.SILVER);
             newInfo.setExpiryDate(LocalDate.now().plusDays(30));
             newInfo.setPlanTier(PlanTier.FREE);
-            newInfo.setIdempotencyKey(request.getIdempotencyKey());
             return membershipRepo.save(newInfo);
         }
     }
 
     public UserMemberShipInfo upgrade(PlanRequest request) {
-
-        Optional<UserMemberShipInfo> existing =
-            membershipRepo.findByIdempotencyKey(request.getIdempotencyKey());
-
-        if (existing.isPresent()) {
-            return existing.get(); // idempotent response
-        }
 
         Long userId = request.getUserId();
         PlanTier newTier = request.getPlanTier();
@@ -127,12 +115,6 @@ public class MembershipService {
     }
 
     public UserMemberShipInfo downgrade(PlanRequest request) {
-        Optional<UserMemberShipInfo> existing =
-            membershipRepo.findByIdempotencyKey(request.getIdempotencyKey());
-
-        if (existing.isPresent()) {
-            return existing.get(); // idempotent response
-        }
 
         Long userId =request.getUserId();
         PlanTier oldTier = request.getPlanTier();
@@ -164,6 +146,7 @@ public class MembershipService {
     }
 
     public UserMemberShipInfo cancel(PlanRequest request) {
+
         Long userId = request.getUserId();
         PlanTier oldTier = request.getPlanTier();
         UserMemberShipInfo info = membershipRepo.findByUserId(userId)
