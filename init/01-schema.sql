@@ -72,9 +72,7 @@ CREATE TABLE orders (
     order_amount NUMERIC(19, 4),
     order_date_time TIMESTAMP,
     product_id UUID NOT NULL,
-    CONSTRAINT fk_orders_product
-        FOREIGN KEY (product_id)
-        REFERENCES product(id)
+    
 );
 
 CREATE TABLE product (
@@ -101,10 +99,9 @@ CREATE TABLE orders_transaction (
 
     created_at TIMESTAMP NOT NULL,
 
-    CONSTRAINT fk_transaction_order
-        FOREIGN KEY (order_id)
-        REFERENCES orders(id)
 );
+
+
 
 
 
