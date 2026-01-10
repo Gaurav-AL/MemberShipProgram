@@ -65,3 +65,46 @@ ADD CONSTRAINT uq_idempotency UNIQUE (idempotency_key, operation);
 CREATE INDEX idx_idempotency_key ON idempotency_keys(idempotency_key);
 CREATE INDEX idx_request_hash ON idempotency_keys(request_hash);
 
+
+CREATE TABLE orders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id BIGINT,
+    order_amount NUMERIC(19, 4),
+    order_date_time TIMESTAMP,
+    product_id UUID NOT NULL,
+    CONSTRAINT fk_orders_product
+        FOREIGN KEY (product_id)
+        REFERENCES product(id)
+);
+
+CREATE TABLE product (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    product_name TEXT NOT NULL,
+
+    product_amount NUMERIC(19, 4) NOT NULL,
+
+    active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+
+CREATE TABLE orders_transaction (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    user_id BIGINT NOT NULL,
+
+    order_id UUID NOT NULL,
+
+    amount NUMERIC(19, 4) NOT NULL,
+
+    order_transaction_type TEXT,
+
+    created_at TIMESTAMP NOT NULL,
+
+    CONSTRAINT fk_transaction_order
+        FOREIGN KEY (order_id)
+        REFERENCES orders(id)
+);
+
+
+
