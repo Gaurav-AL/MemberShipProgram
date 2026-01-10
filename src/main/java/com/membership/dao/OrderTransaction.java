@@ -36,7 +36,7 @@ public class OrderTransaction {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "order_transaction_type")
-    private OrderTransactionType OrderTransactionType;
+    private OrderTransactionType orderTransactionType;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

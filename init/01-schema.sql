@@ -44,3 +44,64 @@ CREATE TABLE tier_benefits (
     member_tier VARCHAR(50),
     benefit VARCHAR(255)
 );
+
+CREATE TABLE idempotency_keys (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    idempotency_key VARCHAR(255) NOT NULL,
+    operation VARCHAR(255) NOT NULL,
+    request_hash VARCHAR(64) NOT NULL,
+    resource_id UUID,
+    status VARCHAR(255),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+-- CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+ALTER TABLE idempotency_keys
+ADD CONSTRAINT uq_idempotency UNIQUE (idempotency_key, operation);
+
+
+CREATE INDEX idx_idempotency_key ON idempotency_keys(idempotency_key);
+CREATE INDEX idx_request_hash ON idempotency_keys(request_hash);
+
+
+CREATE TABLE orders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id BIGINT,
+    order_amount NUMERIC(19, 4),
+    order_date_time TIMESTAMP,
+    product_id UUID NOT NULL,
+    
+);
+
+CREATE TABLE product (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    product_name TEXT NOT NULL,
+
+    product_amount NUMERIC(19, 4) NOT NULL,
+
+    active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+
+CREATE TABLE orders_transaction (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    user_id BIGINT NOT NULL,
+
+    order_id UUID NOT NULL,
+
+    amount NUMERIC(19, 4) NOT NULL,
+
+    order_transaction_type TEXT,
+
+    created_at TIMESTAMP NOT NULL,
+
+);
+
+
+
+
+
