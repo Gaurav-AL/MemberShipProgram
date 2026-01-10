@@ -44,3 +44,24 @@ CREATE TABLE tier_benefits (
     member_tier VARCHAR(50),
     benefit VARCHAR(255)
 );
+
+CREATE TABLE idempotency_keys (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    idempotency_key VARCHAR(255) NOT NULL,
+    operation VARCHAR(255) NOT NULL,
+    request_hash VARCHAR(64) NOT NULL,
+    resource_id UUID,
+    status VARCHAR(255),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+ALTER TABLE idempotency_keys
+ADD CONSTRAINT uq_idempotency UNIQUE (idempotency_key, operation);
+
+
+CREATE INDEX idx_idempotency_key ON idempotency_keys(idempotency_key);
+CREATE INDEX idx_request_hash ON idempotency_keys(request_hash);
+
