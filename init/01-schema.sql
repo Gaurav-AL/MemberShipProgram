@@ -56,7 +56,7 @@ CREATE TABLE idempotency_keys (
 );
 
 
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
+-- CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 ALTER TABLE idempotency_keys
 ADD CONSTRAINT uq_idempotency UNIQUE (idempotency_key, operation);
